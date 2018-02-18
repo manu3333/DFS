@@ -25,7 +25,8 @@ def register(meta_ip, meta_port, data_ip, data_port):
 	   register as data node
 	"""
 
-	# Establish connection
+	# Establish connectionDUP{"servers": [["localhost", 5050]]}
+
 	sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	add = (meta_ip, meta_port)
 	sock.connect(add)
@@ -65,7 +66,7 @@ class DataNodeTCPHandler(SocketServer.BaseRequestHandler):
 		"""
 
 		fname, fsize = p.getFileInfo()
-
+		blocksize = p.getBlockSize()
 		self.request.send("OK")
 
 		# Generates an unique block id.
@@ -77,6 +78,10 @@ class DataNodeTCPHandler(SocketServer.BaseRequestHandler):
 		# Send the block id back
 
 		# Fill code
+		file = open(DATA_PATH+'/'+blockid, 'a')
+		file.write(self.request.recv(fsize))
+		file.close()
+		self.request.send(blockid)
 
 	def handle_get(self, p):
 		

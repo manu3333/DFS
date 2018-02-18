@@ -27,10 +27,52 @@ def copyToDFS(address, fname, path):
 	# Create a connection to the data server
 
 	# Fill code
+	sockt = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	sockt.connect(address) 
+	
+	file_size = os.path.getsize(path)
+	pack = Packet()
+	pack.BuildPutPacket(fname, file_size, 0) # THIS IS DUMMY BLOCK SIZE. Metadata won't need it. 
+	sockt.sendall(pack.getEncodedPacket())
 
+	status = sockt.recv(3)
+	print(status)
+
+	dat = sockt.recv(4096)
+	data = Packet() 
+	data.DecodePacket(dat)
+	message = data.getDataNodes()
 	# Read file
-
+	read = open(path,'r+b')
+	block_ids = []
 	# Fill code
+	if status == "NAK":
+		print ("Error copying files.")
+	else:
+		bk_size = (file_size / len(message)) + 1
+		for i in range(len(message)):
+			# sock_to_dnode.sendto
+			print(read.name, tuple(message[i]))
+			sock_to_dnode = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			sock_to_dnode.connect((message[i][0], message[i][1]))
+			dnode_pack = Packet()
+			dnode_pack.BuildPutPacket(fname, file_size, bk_size)
+			put_pack = dnode_pack.getEncodedPacket()
+			sock_to_dnode.sendall(put_pack)
+			print("Put Packet sent.")
+
+			if sock_to_dnode.recv(2) == "OK":
+				sock_to_dnode.sendall(read.read(bk_size))
+				block_ids.append((message[i][0], message[i][1], sock_to_dnode.recv(1024)))
+
+			sock_to_dnode.close()
+
+	sockt.close()
+	read.close()
+
+
+
+
 
 	# Create a Put packet with the fname and the length of the data,
 	# and sends it to the metadata server 
@@ -45,8 +87,13 @@ def copyToDFS(address, fname, path):
 	# Fill code	
 
 	# Notify the metadata server where the blocks are saved.
+	socket_blks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	socket_blks.connect(address)
 
-	# Fill code
+	bk_ids_to_meta.Packet()
+	bk_ids_to_meta.BuildDataBlockPacket(fname, block_ids)
+	socket_blks.sendall(bk_ids_to_meta.getEncodedPacket())
+	socket_blks.close()
 	
 def copyFromDFS(address, fname, path):
 	""" Contact the metadata server to ask for the file blocks of

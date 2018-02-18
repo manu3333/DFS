@@ -66,17 +66,23 @@ class Packet:
 		if self.packet.has_key("files"):
 			return self.packet["files"]
 
+	def getBlockSize(self):
+		# Build to get block size from BuildPutPacket
+		if self.packet.has_key("bsize"):
+			return self.packet["bsize"]
 
 	def BuildGetPacket(self, fname):
 		"""Build a get packet to get fname."""
 		self.BuildCommand("get")
 		self.packet["fname"] = fname
 
-	def BuildPutPacket(self, fname, fsize):
+	def BuildPutPacket(self, fname, fsize, bsize):
+		# I added block size to keep track of data received in data nodes
 		"""Builds a put packet to put fname and file size."""
 		self.BuildCommand("put")
 		self.packet["fname"] = fname
 		self.packet["fsize"] = fsize
+		self.packet["bsize"] = bsize
 
 	def BuildDataBlockPacket(self, fname, block_list):
 		"""Builds a data block packet. Contains the file name and the list of blocks for the file"""

@@ -56,15 +56,24 @@ class MetadataTCPHandler(SocketServer.BaseRequestHandler):
 		"""Insert new file into the database and send data nodes to save
 		   the file.
 		"""
-	       
+		   
 		# Fill code 
-	
-		if db.InsertFile(info[0], info[1]):
-			# Fill code
-			pass
-		else:
-			self.request.sendall("DUP")
-	
+		info = p.getFileInfo()
+		print info
+		packet = Packet()
+		packet.BuildPutResponse(db.GetDataNodes())	
+		response = packet.getEncodedPacket()
+		try:
+			if db.InsertFile(info[0], info[1]):
+				# Fill code
+				self.request.send("ACK")
+			else:
+				self.request.send("DUP")
+			self.request.send(response)
+		except:
+			self.request.send("NAK")
+
+
 	def handle_get(self, db, p):
 		"""Check if file is in database and return list of
 			server nodes that contain the file.
@@ -75,7 +84,6 @@ class MetadataTCPHandler(SocketServer.BaseRequestHandler):
 
 		if fsize:
 			# Fill code
-
 			self.request.sendall(p.getEncodedPacket())
 		else:
 			self.request.sendall("NFOUND")
@@ -87,7 +95,7 @@ class MetadataTCPHandler(SocketServer.BaseRequestHandler):
 		# packet
 	
 		# Fill code to add blocks to file inode
-
+		db.AddBlockToInode(p.getFileName(), p.getDataBlocks())
 		
 	def handle(self):
 
@@ -98,7 +106,6 @@ class MetadataTCPHandler(SocketServer.BaseRequestHandler):
 		# Define a packet object to decode packet messages
 		p = Packet()
 
-		# Receive a msg from the list, data-node, or copy clients
 		msg = self.request.recv(1024)
 		print msg, type(msg)
 		
@@ -134,16 +141,16 @@ class MetadataTCPHandler(SocketServer.BaseRequestHandler):
 		db.Close()
 
 if __name__ == "__main__":
-    HOST, PORT = "", 8000
+	HOST, PORT = "", 8000
 
-    if len(sys.argv) > 1:
-    	try:
-    		PORT = int(sys.argv[1])
-    	except:
-    		usage()
+	if len(sys.argv) > 1:
+		try:
+			PORT = int(sys.argv[1])
+		except:
+			usage()
 
-    server = SocketServer.TCPServer((HOST, PORT), MetadataTCPHandler)
+	server = SocketServer.TCPServer((HOST, PORT), MetadataTCPHandler)
 
-    # Activate the server; this will keep running until you
-    # interrupt the program with Ctrl-C
-    server.serve_forever()
+	# Activate the server; this will keep running until you
+	# interrupt the program with Ctrl-C
+	server.serve_forever()
