@@ -64,6 +64,7 @@ class DataNodeTCPHandler(SocketServer.BaseRequestHandler):
 		   saves it with an unique ID.  The ID is sent back to the
 		   copy client.
 		"""
+		# blocksize - (fsize / blocksize - 1) 
 
 		fname, fsize = p.getFileInfo()
 		blocksize = p.getBlockSize()
@@ -71,15 +72,22 @@ class DataNodeTCPHandler(SocketServer.BaseRequestHandler):
 
 		# Generates an unique block id.
 		blockid = str(uuid.uuid1())
-
-
+		# last data block size
+		last_data_block = blocksize - (fsize / blocksize - 1)
 		# Open the file for the new data block.  
 		# Receive the data block.
 		# Send the block id back
 
 		# Fill code
 		file = open(DATA_PATH+'/'+blockid, 'a')
-		file.write(self.request.recv(fsize))
+		hasta_ahora = 0
+		while hasta_ahora < blocksize:
+			file.write(self.request.recv(fsize))
+			hasta_ahora += os.path.getsize(DATA_PATH+'/'+blockid)
+			
+			if hasta_ahora == last_data_block:
+				break
+
 		file.close()
 		self.request.send(blockid)
 
