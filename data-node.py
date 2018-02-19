@@ -67,25 +67,30 @@ class DataNodeTCPHandler(SocketServer.BaseRequestHandler):
 		# blocksize - (fsize / blocksize - 1) 
 
 		fname, fsize = p.getFileInfo()
-		blocksize = p.getBlockSize()
+		block_size = p.getBlockSize()
+		print (block_size)
 		self.request.send("OK")
 
 		# Generates an unique block id.
 		blockid = str(uuid.uuid1())
 		# last data block size
-		last_data_block = blocksize - (fsize / blocksize - 1)
+		last_data_block = block_size - (fsize / block_size - 1)
+		print (last_data_block)
 		# Open the file for the new data block.  
 		# Receive the data block.
 		# Send the block id back
 
 		# Fill code
 		file = open(DATA_PATH+'/'+blockid, 'a')
-		hasta_ahora = 0
-		while hasta_ahora < blocksize:
-			file.write(self.request.recv(fsize))
-			hasta_ahora += os.path.getsize(DATA_PATH+'/'+blockid)
+		print ("abri file")
+		bytes_atm = 0
+		while bytes_atm < block_size:
+			got_block = self.request.recv(4096)
+			bytes_atm += sys.getsizeof(got_block)
+			file.write(got_block)
+			print (bytes_atm)
 			
-			if hasta_ahora == last_data_block:
+			if bytes_atm == last_data_block:
 				break
 
 		file.close()
@@ -99,6 +104,7 @@ class DataNodeTCPHandler(SocketServer.BaseRequestHandler):
 		# Read the file with the block id data
 		# Send it back to the copy client.
 		file = open(DATA_PATH+'/'+blockid, 'r')
+		# print (file.read())
 		self.request.sendall(file.read())
 		file.close()
 		# Fill code

@@ -67,7 +67,7 @@ class Packet:
 			return self.packet["files"]
 
 	def getBlockSize(self):
-		# Build to get block size from BuildPutPacket. Meee
+		# Build to get block size from BuildPutPacket.
 		if self.packet.has_key("bsize"):
 			return self.packet["bsize"]
 

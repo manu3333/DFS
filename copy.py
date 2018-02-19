@@ -42,6 +42,7 @@ def copyToDFS(address, fname, path):
 	data = Packet() 
 	data.DecodePacket(dat)
 	message = data.getDataNodes()
+	print (message)
 	# Read file
 	read = open(path,'r+b')
 	block_ids = []
@@ -63,9 +64,10 @@ def copyToDFS(address, fname, path):
 			sock_to_dnode.sendall(dnode_pack.getEncodedPacket())
 			print("Put Packet sent.")
 
-			if sock_to_dnode.recv(2) == "OK":
+			if sock_to_dnode.recv(1024) == "OK":
 				sock_to_dnode.sendall(read.read(bk_size))
 				block_ids.append((address1, port1, sock_to_dnode.recv(1024)))
+				print (block_ids)
 
 			sock_to_dnode.close()
 
@@ -120,9 +122,11 @@ def copyFromDFS(address, fname, path):
 	else:
 
 		# print "tamo aki"
-		# print md_response
+		print md_response
 		packt.DecodePacket(md_response)
 		dnodes = packt.getDataNodes()
+		fsize = packt.packet["fsize"]
+
 		# print(dnodes)
 		
 		file_to_append = open(path,'ab')
@@ -145,9 +149,22 @@ def copyFromDFS(address, fname, path):
 			packert.BuildGetDataBlockPacket(block_id)
 			sok.sendall(packert.getEncodedPacket())
 
-			block = sok.recv(4096)
-			print (block)
-			blocks_string += block
+			block_size = (fsize / len(dnodes)) + 1
+			# print (block_size)
+			last_data_block = block_size - (fsize / block_size - 1)
+			# print (last_data_block)
+			bytes_atm = 0
+
+			while bytes_atm < block_size:
+				
+				block = sok.recv(4096)
+				# print (block)
+				blocks_string += block
+				bytes_atm += sys.getsizeof(block)
+				# print bytes_atm
+
+				if bytes_atm == last_data_block:
+					break
 
 		file_to_append.write(blocks_string)
 		file_to_append.close()
