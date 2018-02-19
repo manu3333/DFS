@@ -81,9 +81,12 @@ class MetadataTCPHandler(SocketServer.BaseRequestHandler):
 
 		# Fill code to get the file name from packet and then 
 		# get the fsize and array of metadata server
+		file_name = p.getFileName()
+		fsize, inode_info = db.GetFileInode(file_name)
 
 		if fsize:
 			# Fill code
+			p.BuildGetResponse(inode_info, fsize)
 			self.request.sendall(p.getEncodedPacket())
 		else:
 			self.request.sendall("NFOUND")
@@ -95,7 +98,7 @@ class MetadataTCPHandler(SocketServer.BaseRequestHandler):
 		# packet
 	
 		# Fill code to add blocks to file inode
-		db.AddBlockToInode(p.getFileName(), p.getDataBlocks())
+		print(db.AddBlockToInode(p.getFileName(), p.getDataBlocks()))
 		
 	def handle(self):
 

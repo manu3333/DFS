@@ -57,8 +57,7 @@ def copyToDFS(address, fname, path):
 			sock_to_dnode.connect((message[i][0], message[i][1]))
 			dnode_pack = Packet()
 			dnode_pack.BuildPutPacket(fname, file_size, bk_size)
-			put_pack = dnode_pack.getEncodedPacket()
-			sock_to_dnode.sendall(put_pack)
+			sock_to_dnode.sendall(dnode_pack.getEncodedPacket())
 			print("Put Packet sent.")
 
 			if sock_to_dnode.recv(2) == "OK":
@@ -90,7 +89,7 @@ def copyToDFS(address, fname, path):
 	socket_blks = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 	socket_blks.connect(address)
 
-	bk_ids_to_meta.Packet()
+	bk_ids_to_meta = Packet()
 	bk_ids_to_meta.BuildDataBlockPacket(fname, block_ids)
 	socket_blks.sendall(bk_ids_to_meta.getEncodedPacket())
 	socket_blks.close()
@@ -103,11 +102,36 @@ def copyFromDFS(address, fname, path):
 
    	# Contact the metadata server to ask for information of fname
 
+   	socke = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+	socke.connect(address) 
+
+	packt = Packet()
+	packt.BuildGetPacket(fname)
+	socke.sendall(packt.getEncodedPacket())
+
 	# Fill code
+	md_response = socke.recv(4096)
+
+	if md_response == "NFOUND":
+		print("NO, DALE REWIND!")
+	else:
+		# print "tamo aki"
+		# print md_response
+		packt.DecodePacket(md_response)
+		dnodes = packt.getDataNodes()
+		# print(dnodes)
+
+		for coso in dnodes:
+			print "addr:",coso[0]
+			print "port:",coso[1]
+			print "blockid:",coso[-1]
+
+
 
 	# If there is no error response Retreive the data blocks
 
 	# Fill code
+	#for i 
 
     	# Save the file
 	
