@@ -50,11 +50,14 @@ def copyToDFS(address, fname, path):
 		print ("Error copying files.")
 	else:
 		bk_size = (file_size / len(message)) + 1
-		for i in range(len(message)):
+		
+		for i in message:
 			# sock_to_dnode.sendto
-			print(read.name, tuple(message[i]))
+			# print(read.name, tuple(message[i]))
 			sock_to_dnode = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			sock_to_dnode.connect((message[i][0], message[i][1]))
+			address1 = i[0]
+			port1 = i[1]
+			sock_to_dnode.connect((address1, port1))
 			dnode_pack = Packet()
 			dnode_pack.BuildPutPacket(fname, file_size, bk_size)
 			sock_to_dnode.sendall(dnode_pack.getEncodedPacket())
@@ -62,7 +65,7 @@ def copyToDFS(address, fname, path):
 
 			if sock_to_dnode.recv(2) == "OK":
 				sock_to_dnode.sendall(read.read(bk_size))
-				block_ids.append((message[i][0], message[i][1], sock_to_dnode.recv(1024)))
+				block_ids.append((address1, port1, sock_to_dnode.recv(1024)))
 
 			sock_to_dnode.close()
 
@@ -115,16 +118,39 @@ def copyFromDFS(address, fname, path):
 	if md_response == "NFOUND":
 		print("NO, DALE REWIND!")
 	else:
+
 		# print "tamo aki"
 		# print md_response
 		packt.DecodePacket(md_response)
 		dnodes = packt.getDataNodes()
 		# print(dnodes)
+		
+		file_to_append = open(path,'ab')
 
-		for coso in dnodes:
-			print "addr:",coso[0]
-			print "port:",coso[1]
-			print "blockid:",coso[-1]
+		blocks_string = ""
+
+		for i in dnodes:
+			print ("address:",i[0])
+			print ("port:",i[1])
+			print ("blockid:",i[-1])
+
+			address1 = i[0]
+			port1 = i[1]
+			block_id = i[-1]
+			
+			sok = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			sok.connect((address1, port1))
+
+			packert = Packet()
+			packert.BuildGetDataBlockPacket(block_id)
+			sok.sendall(packert.getEncodedPacket())
+
+			block = sok.recv(4096)
+			print (block)
+			blocks_string += block
+
+		file_to_append.write(blocks_string)
+		file_to_append.close()
 
 
 

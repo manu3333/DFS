@@ -69,6 +69,7 @@ class MetadataTCPHandler(SocketServer.BaseRequestHandler):
 				self.request.send("ACK")
 			else:
 				self.request.send("DUP")
+			
 			self.request.send(response)
 		except:
 			self.request.send("NAK")
